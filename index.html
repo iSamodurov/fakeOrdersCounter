@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <div class="counter"></div>
+
+
+    <script src="./src/fakeCounter.js"></script>
+    <script>
+        var counter = new bookingCounter('.counter', {
+
+            // Диапазон для генерации кол-ва заказов
+            countValMin: 4,
+            countValMax: 21,
+
+            // С какой периодичностью обновлять 
+            // и в каком диапазоне
+            updateInterval: 40, 
+            updateIncMin: 1,            
+            updateIncMax: 4,
+
+            // Когда посл.раз заказали
+            lastOrderMin: 5,    //min
+            lastOrderMax: 60    //min
+            
+        });
+        counter.init();
+    </script>
+</body>
+</html>
