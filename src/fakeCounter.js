@@ -32,8 +32,9 @@ bookingCounter.prototype.init = function () {
 
 
 bookingCounter.prototype.getTemplate = function(data){    
+    var cnt = data.count + " " + this.declOfNum(data.count, ['раз', 'раза', 'раз']);
     return '<div class="buy-trigger">' +
-                '<div class="buy-trigger__counter">Сегодня забронировано <b>' + data.count + ' </b></div>' +
+                '<div class="buy-trigger__counter">Сегодня забронировано <b>' + cnt + ' </b></div>' +
                 '<div class="buy-trigger__last">Последний раз: ' + data.lastOrder + ' назад</div>' +
             '</div>';    
 }
@@ -108,14 +109,15 @@ bookingCounter.prototype.declOfNum = function(number, titles) {
 
 bookingCounter.prototype.generateCount = function(){
     var num = this.getRandomInt(this.countMin, this.countMax);
-    var out = this.declOfNum(num, ['раз', 'раза', 'раз']);
-    return num + " " + out;
+    return num;
 }
 
 bookingCounter.prototype.generateLastOrder = function(){
     var num = this.getRandomInt(this.lastOrderMin, this.lastOrderMax);
     return num + ' мин';
 }
+
+
 
 bookingCounter.prototype.getTimeDiff = function(){   
     var tmp = this.getCounterData();
@@ -132,16 +134,31 @@ bookingCounter.prototype.getTimeDiff = function(){
 
 bookingCounter.prototype.setData = function(index){
     var tmp = this.loadData();
-    console.log(tmp[index]);
+    var incVal = this.getRandomInt(this.incrementMin, this.incrementMax);
+    var newCount = tmp[index].count + incVal;
+    
+    if(newCount > this.countMax) {
+        newCount = this.countMax;
+        // TODO: Если максимальное значение достигнуто, инкерментировать только lastOrder
+    }
+
+    var newData = {
+        count: newCount,
+        lastOrder: this.generateLastOrder(),
+        lastUpdate: new Date().getTime()
+    }
+
+    var out = Object.assign(tmp[index], newData);
+    tmp[index] = out;
+    localStorage.setItem(this.storageKey, JSON.stringify(tmp));
 }
 
 
-// TODO: Create function fot update Values
+// TODO: Проверять число, если прошло более суток, удалять localStorage
 bookingCounter.prototype.updateCounter = function(){    
     var diff = this.getTimeDiff();     
-
-    if(diff >= this.updateInterval) {
-        
+    console.log(diff);
+    if(diff >= this.updateInterval) {        
         var index = this.getIndex();
         this.setData(index);
     }
