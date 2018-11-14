@@ -1,62 +1,159 @@
 
 var bookingCounter = function(selector, options){
 
-    this.selector = selector; 
-    this.values = {};   
-    this.countValMin = options.countValMin || 5;
-    this.countValMax = options.countValMax || 12;
+    this.selector = selector;     
+    this.countMin = options.countMin || 5;
+    this.countMax = options.countMax || 12;
+    this.incrementMin = options.incrementMin || 1;
+    this.incrementMax = options.incrementMax || 3;
+    this.lastOrderMin = options.lastOrderMin || 5;
+    this.lastOrderMax = options.lastOrderMax || 60;
+
+    this.updateInterval = options.updateInterval || 40;
     
-    this.init = function(){
-        var containers = document.querySelectorAll(this.selector);        
-        containers = Array.from(containers);
-        this.getValues();
-        var that = this;
-        containers.forEach(function(item, key){
-            item.innerHTML = that.getTemplate(that.values);
-        })
-    }
+    this.init();
+}
 
 
-    this.generateValues = function(){    
-        var data = {
-            count: this.getRandomInt(this.countValMin, this.countValMax),
-            hoursAgo: this.getHours()
-        } 
-        console.log(this);
-        localStorage.setItem('bookingData', JSON.stringify(data));
-        this.values = data;        
-    }
+
+bookingCounter.prototype.storageKey = 'countersData';
 
 
-    this.getValues = function(){
-        var data = localStorage.getItem('bookingData');
-        if(!data) {
-            this.generateValues();
-        } else {
-            this.values = JSON.parse(data);
-        }
-    }
+bookingCounter.prototype.init = function () {    
+    var containers = Array.from(document.querySelectorAll(this.selector));
+    var data = this.getCounterData();
+    var murkup = this.getTemplate(data);
+    containers.forEach(function (item, key) {
+        item.innerHTML = murkup;
+    })   
+    this.updateCounter(); 
+}
 
 
-    this.getTemplate = function(values){
+
+bookingCounter.prototype.getTemplate = function(data){    
     return '<div class="buy-trigger">' +
-                '<div class="buy-trigger__counter">Сегодня забронировано <b>'+ values.count +' раз</b></div>' +
-                '<div class="buy-trigger__last">Последний раз: '+ values.hoursAgo +' назад</div>' +
-            '</div>';
+                '<div class="buy-trigger__counter">Сегодня забронировано <b>' + data.count + ' </b></div>' +
+                '<div class="buy-trigger__last">Последний раз: ' + data.lastOrder + ' назад</div>' +
+            '</div>';    
+}
+
+
+
+bookingCounter.prototype.addPage = function(){
+    var data = this.loadData();
+    var newData = this.createNewData();
+    this.lastUpdate = newData.lastUpdate;
+    data.push(newData);
+    localStorage.setItem(this.storageKey, JSON.stringify(data));
+    return newData;
+}
+
+
+
+bookingCounter.prototype.getCounterData = function(){
+    var currentUrl = this.getCurrentUrl();
+    var data = this.loadData();    
+    var out = data.filter(item => item.url == currentUrl);
+        
+    if(out.length > 0) {
+        this.lastUpdate = out[0].lastUpdate;
+        return out[0];
+    } else {
+        return this.addPage();
+    }
+}
+
+
+
+bookingCounter.prototype.loadData = function(){
+    var tmp = [];    
+    var data = localStorage.getItem(this.storageKey);
+
+    if(!data) {     
+        tmp.push(this.createNewData());
+        data = JSON.stringify(tmp);
+        localStorage.setItem(this.storageKey, data);
+        return tmp;          
+    } else {
+        return JSON.parse(data);
+    }
+}
+
+
+
+bookingCounter.prototype.createNewData = function(){
+    return {
+        url: this.getCurrentUrl(),
+        lastUpdate: new Date().getTime(),
+        count: this.generateCount(),
+        lastOrder: this.generateLastOrder()
+    }
+}
+
+
+
+bookingCounter.prototype.getCurrentUrl = function(){
+    return window.location.host + window.location.pathname;    
+}
+
+bookingCounter.prototype.getRandomInt = function (min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+bookingCounter.prototype.declOfNum = function(number, titles) {
+    cases = [2, 0, 1, 1, 1, 2];
+    return titles[(number % 100 > 4 && number % 100 < 20) ? 2 : cases[(number % 10 < 5) ? number % 10 : 5]];
+}
+
+bookingCounter.prototype.generateCount = function(){
+    var num = this.getRandomInt(this.countMin, this.countMax);
+    var out = this.declOfNum(num, ['раз', 'раза', 'раз']);
+    return num + " " + out;
+}
+
+bookingCounter.prototype.generateLastOrder = function(){
+    var num = this.getRandomInt(this.lastOrderMin, this.lastOrderMax);
+    return num + ' мин';
+}
+
+bookingCounter.prototype.getTimeDiff = function(){   
+    var tmp = this.getCounterData();
+    var a = tmp.lastUpdate;
+    var b = new Date().getTime();
+    var dateA = new Date(a);
+    var dateB = new Date(b);
+
+    var Difference = dateB.getHours() * 60 + dateB.getMinutes() - dateA.getHours() * 60 - dateA.getMinutes();
+    return Difference;
+}
+
+
+
+bookingCounter.prototype.setData = function(index){
+    var tmp = this.loadData();
+    console.log(tmp[index]);
+}
+
+
+// TODO: Create function fot update Values
+bookingCounter.prototype.updateCounter = function(){    
+    var diff = this.getTimeDiff();     
+
+    if(diff >= this.updateInterval) {
+        
+        var index = this.getIndex();
+        this.setData(index);
     }
 
-
-    this.getRandomInt = function(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
+}
 
 
-    this.getHours = function(){
-        var num = this.getRandomInt(2,20);
-        if(num >= 2 && num < 5) {
-            return num + ' часа';
-        } else {
-            return num + ' часов';
-        }
-    }
+bookingCounter.prototype.getIndex = function(){
+    var url = this.getCurrentUrl();
+    var data = this.loadData();
+    var index = data.findIndex(obj => {
+        return obj.url == url;
+    })
+    return index;
 }

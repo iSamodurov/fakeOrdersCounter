@@ -15,21 +15,21 @@
         var counter = new bookingCounter('.counter', {
 
             // Диапазон для генерации кол-ва заказов
-            countValMin: 4,
-            countValMax: 21,
+            countMin: 4,
+            countMax: 21,
 
             // С какой периодичностью обновлять 
             // и в каком диапазоне
-            updateInterval: 40, 
-            updateIncMin: 1,            
-            updateIncMax: 4,
+            updateInterval: 1, //min
+            incrementMin: 1,            
+            incrementMax: 4,
 
             // Когда посл.раз заказали
             lastOrderMin: 5,    //min
             lastOrderMax: 60    //min
             
         });
-        counter.init();
+        //counter.init();
     </script>
 </body>
 </html>
