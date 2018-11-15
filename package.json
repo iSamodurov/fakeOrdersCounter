@@ -1,0 +1,21 @@
+{
+  "name": "fakeBookingCounter",
+  "version": "0.0.1",
+  "description": "js plugin for fake counters like on booking.com",
+  "main": "index.js",
+  "repository": "https://github.com/iSamodurov/fakeOrdersCounter.git",
+  "author": "samodurov <samodirov.ivan@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "@babel/cli": "^7.1.5",
+    "@babel/core": "^7.1.6",
+    "@babel/preset-stage-0": "^7.0.0",
+    "babel-preset-env": "^1.7.0",
+    "uglify-js": "^3.4.9"
+  },
+  "scripts": {
+    "minify": "uglifyjs dist/fakeCounter.js -C -o dist/fakeCounter.min.js",
+    "build": "babel src/fakeCounter.js -d dist/"
+  }
+}
