@@ -35,7 +35,7 @@ bookingCounter.prototype.getTemplate = function(data){
     var cnt = data.count + " " + this.declOfNum(data.count, ['раз', 'раза', 'раз']);
     return '<div class="buy-trigger">' +
                 '<div class="buy-trigger__counter">Сегодня забронировано <b>' + cnt + ' </b></div>' +
-                '<div class="buy-trigger__last">Последний раз: ' + data.lastOrder + ' назад</div>' +
+                '<div class="buy-trigger__last">Последний раз: ' + data.lastOrder + ' мин назад</div>' +
             '</div>';    
 }
 
@@ -88,7 +88,8 @@ bookingCounter.prototype.createNewData = function(){
         url: this.getCurrentUrl(),
         lastUpdate: new Date().getTime(),
         count: this.generateCount(),
-        lastOrder: this.generateLastOrder()
+        lastOrder: this.generateLastOrder(),
+        counterDate: new Date().getTime()
     }
 }
 
@@ -114,7 +115,7 @@ bookingCounter.prototype.generateCount = function(){
 
 bookingCounter.prototype.generateLastOrder = function(){
     var num = this.getRandomInt(this.lastOrderMin, this.lastOrderMax);
-    return num + ' мин';
+    return num;
 }
 
 
@@ -125,7 +126,6 @@ bookingCounter.prototype.getTimeDiff = function(){
     var b = new Date().getTime();
     var dateA = new Date(a);
     var dateB = new Date(b);
-
     var Difference = dateB.getHours() * 60 + dateB.getMinutes() - dateA.getHours() * 60 - dateA.getMinutes();
     return Difference;
 }
@@ -136,15 +136,16 @@ bookingCounter.prototype.setData = function(index){
     var tmp = this.loadData();
     var incVal = this.getRandomInt(this.incrementMin, this.incrementMax);
     var newCount = tmp[index].count + incVal;
+    var newLastOrder = this.generateLastOrder();
     
     if(newCount > this.countMax) {
         newCount = this.countMax;
-        // TODO: Если максимальное значение достигнуто, инкерментировать только lastOrder
-    }
+        newLastOrder = tmp[index].lastOrder + this.updateInterval
+    }    
 
     var newData = {
         count: newCount,
-        lastOrder: this.generateLastOrder(),
+        lastOrder: newLastOrder,
         lastUpdate: new Date().getTime()
     }
 
@@ -154,23 +155,32 @@ bookingCounter.prototype.setData = function(index){
 }
 
 
-// TODO: Проверять число, если прошло более суток, удалять localStorage
+
 bookingCounter.prototype.updateCounter = function(){    
     var diff = this.getTimeDiff();     
-    console.log(diff);
     if(diff >= this.updateInterval) {        
         var index = this.getIndex();
         this.setData(index);
     }
-
+    this.checkDate();
 }
 
 
 bookingCounter.prototype.getIndex = function(){
     var url = this.getCurrentUrl();
-    var data = this.loadData();
+    var data = this.loadData();    
     var index = data.findIndex(obj => {
         return obj.url == url;
     })
     return index;
+}
+
+
+bookingCounter.prototype.checkDate = function(){
+    var data = this.getCounterData();    
+    var counterDate = new Date(data.counterDate).getDate();    
+    var nowDate = new Date().getDate();
+    if(counterDate != nowDate) {
+        localStorage.removeItem(this.storageKey);
+    }    
 }
